@@ -49,9 +49,11 @@ This file is the source of truth and the cross-machine memory (it travels throug
   The user explicitly rejected optional code paths for newer GL, even Windows-only ones.
 - Keep the structure flat and simple (`src/`, `shaders/`, `external/`); no extra layers/abstractions.
 - Same code on Windows and macOS: no platform-specific code unless unavoidable.
-- Dependencies: GLFW only (find_package, else CMake FetchContent). GL loader: either a glad build
-  generated for GL 4.1 core, or the reference project's approach (vendored `GL/glcorearb.h` +
-  X-macro loader via `glfwGetProcAddress`). To be decided in lesson 01.
+- Dependencies: GLFW only (find_package, else CMake FetchContent). GL loader (decided in lesson 01):
+  vendored Khronos headers in `external/khronos` + X-macro loader via `glfwGetProcAddress` in
+  `src/gl.hpp` / `src/gl.cpp`. Each lesson adds its new GL functions to the `GL_FUNCTIONS` list.
+  Only 4.1 functions go there: on Windows the driver still hands out newer ones (`glDispatchCompute`
+  loaded fine in a 4.1 context), so nothing but this rule protects the Mac build.
 
 ## Reference implementation (`../opengl_fluid_sim_tutorial/`, Windows PC only)
 
@@ -114,7 +116,8 @@ Part IV — 3D
 
 ## Pitfalls already found (verified in the reference project)
 
-- macOS: no `GL/glcorearb.h` in the SDK (vendor it or use glad); needs `GLFW_OPENGL_FORWARD_COMPAT`;
+- macOS: no `GL/glcorearb.h` in the SDK (vendor it or use glad); GLFW 3.3 refuses a context without
+  `GLFW_OPENGL_FORWARD_COMPAT` (3.4's source no longer checks; we keep the hint because CMake accepts 3.3);
   Retina → glViewport uses `glfwGetFramebufferSize`, the mouse uses `glfwGetWindowSize`; no debug
   output (use glGetError); OpenGL there runs on top of Metal and is deprecated (still present).
 - GLSL 410: sampler units via `glUniform1i`, uniform blocks via `glGetUniformBlockIndex` +
@@ -144,17 +147,21 @@ Part IV — 3D
 
 Update this at the end of every session.
 
-- 2026-11-08: Course started. Lesson 00 written (`docs/00-muhit-va-loyiha.md`), waiting for the user
-  to do it. The repo did not exist yet when the lesson was written: the user runs `git init` and
-  creates the GitHub repo in lesson 00.
+- 2026-11-08: Course started. Lesson 00 done: the user built and ran it on Windows (Claude rebuilt and
+  ran their code too) and reports it works on the Mac. Repo: `sardor-c/opengl_fluid_sim_scratch`.
+- 2026-11-08: Lesson 01 written (`docs/01-opengl-konteksti.md`), waiting for the user to do it.
 
 Decisions so far:
 - One executable, `fluid_sim`. Compile with `-Wall -Wextra` (g++ and AppleClang only, no MSVC branch).
 - `cmake_minimum_required(VERSION 3.24)`: CMP0135 is NEW, so FetchContent needs no policy block.
 - Same commands on both machines: `cmake -S . -B build -G Ninja`, `cmake --build build`.
-- Lesson 00's window uses `GLFW_NO_API` and `glfwWaitEvents`; lesson 01 adds the context and moves
-  to `glfwPollEvents`.
+- Lesson 01 replaced the window's `GLFW_NO_API` / `glfwWaitEvents` with a 4.1 core context and
+  `glfwPollEvents`. The window title shows FPS, window size and framebuffer size.
+- GL function pointers are plain globals named like the functions (no namespace): nothing links
+  opengl32 or the OpenGL framework, and `GLFW_INCLUDE_NONE` keeps system GL headers out.
+- The user added `CMAKE_EXPORT_COMPILE_COMMANDS ON` to their CMakeLists; keep it when showing the file.
 
-Verification status of lesson 00: everything was built and run on the Windows PC (shared GLFW 3.5.1
-from MSYS2, static GLFW 3.4 via FetchContent, git push + fresh clone + build against a local bare
-repo). **The macOS steps have not been run by Claude** — the first real test is the user's Mac.
+Verification status: lessons were built and run on the Windows PC (shared GLFW 3.5.1 from MSYS2,
+static GLFW 3.4 via FetchContent; RTX 3060 gives `4.1.0 NVIDIA 610.47`, monitor 165 Hz). **Claude has
+no Mac**, so the macOS results in the lessons are expectations until the user reports them. No clang
+on the PC either, so `-Wall -Wextra` warnings under AppleClang are also unchecked.

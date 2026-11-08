@@ -22,7 +22,9 @@ endif()
 
 add_executable(fluid_sim
     src/main.cpp
+    src/gl.cpp
 )
 
+target_include_directories(fluid_sim PRIVATE external/khronos)
 target_compile_options(fluid_sim PRIVATE -Wall -Wextra)
 target_link_libraries(fluid_sim PRIVATE glfw)

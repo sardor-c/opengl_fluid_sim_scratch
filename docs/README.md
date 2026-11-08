@@ -4,14 +4,15 @@ Bu kursda SPH (Smoothed Particle Hydrodynamics) suyuqlik simulyatsiyasini noldan
 yozasiz, har bir qadam bitta darsda tushuntiriladi. Kod Windows'da ham, Mac'da ham bir xil ishlaydi,
 shuning uchun OpenGL 4.1 core'dan chiqmaymiz (macOS qo'llaydigan eng yangi versiya).
 
-Holat: **yozildi** (dars tayyor), **reja** (hali yozilmagan). Reja kurs davomida o'zgarishi mumkin.
+Holat: **bajarildi** (ikkala kompyuterda ishladi), **yozildi** (dars tayyor), **reja** (hali yozilmagan).
+Reja kurs davomida o'zgarishi mumkin.
 
 ## I qism: muhit va OpenGL asoslari
 
 | # | Dars | Holat |
 |---|---|---|
-| 00 | [Muhit va loyiha: ikki kompyuterda bo'sh oyna](00-muhit-va-loyiha.md) | yozildi |
-| 01 | OpenGL konteksti: 4.1 core, funksiyalarni yuklash, asosiy sikl | reja |
+| 00 | [Muhit va loyiha: ikki kompyuterda bo'sh oyna](00-muhit-va-loyiha.md) | bajarildi |
+| 01 | [OpenGL konteksti: 4.1 core, funksiyalarni yuklash, asosiy sikl](01-opengl-konteksti.md) | yozildi |
 | 02 | Birinchi uchburchak: shader, VAO, VBO | reja |
 | 03 | Ko'p zarracha: orthographic proyeksiya, instancing, silliq doira | reja |
 
