@@ -78,7 +78,8 @@ Part I — setup and OpenGL basics
 - 01 OpenGL konteksti: 4.1 core + forward-compat hints, function loading, clear colour, GL_VERSION,
   vsync, framebuffer size vs window size (Retina), main loop, glGetError helper.
 - 02 Birinchi uchburchak: GLSL 410 shaders (compile/link, logs), VAO/VBO, attributes, glDrawArrays;
-  loading shaders from files (path via compile definition), simple `#include`.
+  loading shaders from files (path via compile definition). The simple shader `#include` moved to
+  the first lesson where two shaders really share code (it then also needs `\r` stripping and `#line`).
 - 03 Ko'p zarracha: orthographic world→clip uniform, quad from gl_VertexID, instancing
   (glDrawArraysInstanced + glVertexAttribDivisor), smooth circle (smoothstep + fwidth), blending.
 
@@ -140,6 +141,9 @@ Part IV — 3D
   pass-bound, not particle-bound. RTX 3060: 2D 125k particles ~124 fps, 3D 170k ~81 fps.
 - Windows: `C:\msys64\mingw64\bin` must be on PATH (glfw3.dll, libwinpthread); Git Bash paths
   (`/c/...`) don't work in native programs (use `cygpath -m`). Git autocrlf → shader loaders must strip `\r`.
+- NVIDIA hides mistakes (tested on the RTX 3060, driver 610.47, in a 4.1 context): `#version 430`
+  compiles, a fragment `in` with no matching vertex `out` (wrong name or wrong type) links and renders
+  black, a draw with no `glUseProgram` renders black with no GL error. Only the Mac can catch these.
 - Testing pattern that worked: `--frames N` self-test (NaN, out-of-bounds, sorted keys), headless
   harnesses in the scratchpad with a fixed dt to compare implementations, screenshots via PowerShell.
 
@@ -149,7 +153,9 @@ Update this at the end of every session.
 
 - 2026-11-08: Course started. Lesson 00 done: the user built and ran it on Windows (Claude rebuilt and
   ran their code too) and reports it works on the Mac. Repo: `sardor-c/opengl_fluid_sim_scratch`.
-- 2026-11-08: Lesson 01 written (`docs/01-opengl-konteksti.md`), waiting for the user to do it.
+- 2026-11-08: Lesson 01 done: the user's code rebuilt and run on Windows by Claude; the user reports
+  it works on the Mac (the Mac's `OpenGL:` line and window title were requested, not received yet).
+- 2026-11-08: Lesson 02 written (`docs/02-birinchi-uchburchak.md`), waiting for the user to do it.
 
 Decisions so far:
 - One executable, `fluid_sim`. Compile with `-Wall -Wextra` (g++ and AppleClang only, no MSVC branch).

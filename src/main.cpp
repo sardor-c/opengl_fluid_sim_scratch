@@ -1,4 +1,5 @@
 #include "gl.hpp"
+#include "shader.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -6,6 +7,10 @@
 #include <cmath>
 #include <cstdio>
 
+struct Vertex {
+    float x, y;
+    float r, g, b;
+};
 
 static void on_glfw_error(int code, const char* description) {
     std::fprintf(stderr, "GLFW xatosi %d: %s\n", code, description);
@@ -47,25 +52,62 @@ int main() {
 
     glfwSwapInterval(1);
 
+    GLuint program = create_program("triangle.vert", "triangle.frag");
+    if (!program) {
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return 1;
+    }
+
+    const Vertex vertices[] = {
+        { -0.6f, -0.5f, 1.0f, 0.25f, 0.25f },
+        { 0.6f, -0.5f, 0.25f, 1.0f, 0.25f },
+        { 0.0f, 0.6f, 0.25f, 0.45f, 1.0f },
+    };
+
+    GLuint vao = 0;
+    GLuint vbo = 0;
+
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+        reinterpret_cast<const void*>(offsetof(Vertex, x)));
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+        reinterpret_cast<const void*>(offsetof(Vertex, r)));
+
+    gl_check("sozlash");
+
     double fps_time = glfwGetTime();
     int fps_frames = 0;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
         int fb_width = 0;
         int fb_height = 0;
         glfwGetFramebufferSize(window, &fb_width, &fb_height);
         glViewport(0, 0, fb_width, fb_height);
 
-        const double now = glfwGetTime();
-        const float wave = 0.5f + 0.5f * static_cast<float>(std::sin(now));
-        glClearColor(0.05f, 0.15f + 0.25f * wave, 0.35f + 0.45f * wave, 1.0f);
+        glClearColor(0.05f, 0.07f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        glUseProgram(program);
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
         gl_check("kadr");
 
         glfwSwapBuffers(window);
 
         fps_frames++;
+        const double now = glfwGetTime();
         if (now - fps_time >= 0.5) {
             int win_width = 0;
             int win_height = 0;
@@ -80,6 +122,10 @@ int main() {
             fps_frames = 0;
         }
     }
+
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(program);
 
     glfwDestroyWindow(window);
     glfwTerminate();
