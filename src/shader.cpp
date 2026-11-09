@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cstdio>
 
 static GLuint compile_shader(GLenum stage, const char* file) {
     const std::string path = std::string(SHADER_DIR) + "/" + file;
@@ -26,7 +27,7 @@ static GLuint compile_shader(GLenum stage, const char* file) {
     if (!ok) {
         char log[2048];
         glGetShaderInfoLog(shader, sizeof(log), nullptr, log);
-        std::fprintf(stderr, "%s komilatsiya xatosi: \n%s\n", file, log);
+        std::fprintf(stderr, "%s komilyatsiya xatosi: \n%s\n", file, log);
         glDeleteShader(shader);
         return 0;
     }
@@ -59,4 +60,12 @@ GLuint create_program(const char* vertex_file, const char* fragment_file) {
         return 0;
     }
     return program;
+}
+
+GLint uniform_location(GLuint program, const char* name) {
+    const GLint location = glGetUniformLocation(program, name);
+    if (location == -1) {
+        std::fprintf(stderr, "Uniform topilmadi: %s\n", name);
+    }
+    return location;
 }

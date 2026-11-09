@@ -13,8 +13,8 @@ Reja kurs davomida o'zgarishi mumkin.
 |---|---|---|
 | 00 | [Muhit va loyiha: ikki kompyuterda bo'sh oyna](00-muhit-va-loyiha.md) | bajarildi |
 | 01 | [OpenGL konteksti: 4.1 core, funksiyalarni yuklash, asosiy sikl](01-opengl-konteksti.md) | bajarildi |
-| 02 | [Birinchi uchburchak: shader, VAO, VBO](02-birinchi-uchburchak.md) | yozildi |
-| 03 | Ko'p zarracha: orthographic proyeksiya, instancing, silliq doira | reja |
+| 02 | [Birinchi uchburchak: shader, VAO, VBO](02-birinchi-uchburchak.md) | bajarildi |
+| 03 | [Ko'p zarracha: dunyo koordinatalari, instancing, silliq doira](03-kop-zarracha.md) | yozildi |
 
 ## II qism: CPU'da 2D SPH
 

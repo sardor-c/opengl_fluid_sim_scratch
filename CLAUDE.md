@@ -155,7 +155,9 @@ Update this at the end of every session.
   ran their code too) and reports it works on the Mac. Repo: `sardor-c/opengl_fluid_sim_scratch`.
 - 2026-11-08: Lesson 01 done: the user's code rebuilt and run on Windows by Claude; the user reports
   it works on the Mac (the Mac's `OpenGL:` line and window title were requested, not received yet).
-- 2026-11-08: Lesson 02 written (`docs/02-birinchi-uchburchak.md`), waiting for the user to do it.
+- 2026-11-08: Lesson 02 done: the user's code rebuilt and run on Windows by Claude (triangle, 165 FPS,
+  no GL errors); the user reports it works on the Mac (terminal output not received yet).
+- 2026-11-08: Lesson 03 written (`docs/03-kop-zarracha.md`), waiting for the user to do it.
 
 Decisions so far:
 - One executable, `fluid_sim`. Compile with `-Wall -Wextra` (g++ and AppleClang only, no MSVC branch).
@@ -166,6 +168,10 @@ Decisions so far:
 - GL function pointers are plain globals named like the functions (no namespace): nothing links
   opengl32 or the OpenGL framework, and `GLFW_INCLUDE_NONE` keeps system GL headers out.
 - The user added `CMAKE_EXPORT_COMPILE_COMMANDS ON` to their CMakeLists; keep it when showing the file.
+- Lesson 03: particle shaders are `shaders/particle2d.{vert,frag}`; world→clip is a `vec2` uniform
+  (`1/half_width, 1/half_height`, `half_height = 5`); `uniform_location` in `shader.cpp` reports a -1.
+- Circle edge is `smoothstep(1 - fwidth, 1, dist)`, not the reference's `1 ± fwidth`: alpha must reach
+  0 at the quad edge, otherwise the circle is visibly cut flat on its four sides (seen in a zoomed crop).
 
 Verification status: lessons were built and run on the Windows PC (shared GLFW 3.5.1 from MSYS2,
 static GLFW 3.4 via FetchContent; RTX 3060 gives `4.1.0 NVIDIA 610.47`, monitor 165 Hz). **Claude has

@@ -33,7 +33,16 @@
     X(PFNGLBINDVERTEXARRAYPROC, glBindVertexArray)                     \
     X(PFNGLENABLEVERTEXATTRIBARRAYPROC, glEnableVertexAttribArray)     \
     X(PFNGLVERTEXATTRIBPOINTERPROC, glVertexAttribPointer)             \
-    X(PFNGLDRAWARRAYSPROC, glDrawArrays)
+    X(PFNGLDRAWARRAYSPROC, glDrawArrays)                               \
+    X(PFNGLENABLEPROC, glEnable)                                       \
+    X(PFNGLBLENDFUNCPROC, glBlendFunc)                                 \
+    X(PFNGLGETUNIFORMLOCATIONPROC, glGetUniformLocation)               \
+    X(PFNGLUNIFORM1FPROC, glUniform1f)                                 \
+    X(PFNGLUNIFORM2FPROC, glUniform2f)                                 \
+    X(PFNGLVERTEXATTRIBDIVISORPROC, glVertexAttribDivisor)             \
+    X(PFNGLPOLYGONMODEPROC, glPolygonMode)                             \
+    X(PFNGLDRAWARRAYSINSTANCEDPROC, glDrawArraysInstanced)
+
 
 #define X(type, name) extern type name;
 GL_FUNCTIONS(X)
