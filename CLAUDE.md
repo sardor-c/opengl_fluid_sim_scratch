@@ -11,6 +11,10 @@ This file is the source of truth and the cross-machine memory (it travels throug
 - Learning C++, OpenGL, the math (linear algebra) and the physics behind them. Wants depth: explain
   concepts from the ground up ("why does this exist, what problem does it solve, what breaks
   without it"), with analogies — but keep the pace up.
+- **Knows almost no math or physics (the user's own words, 2026-11-09).** In every lesson, explain each math and
+  physics concept from zero, however basic (vector, square root, sin/cos, velocity vs acceleration, force, energy),
+  in the simplest words but fully: an everyday example, small numbers worked by hand, then where it is in the code.
+  No unexplained notation, no Greek letters, no calculus symbols.
 - Works on **two machines**: Windows PC (MSYS2 MinGW64: g++, cmake, ninja, glfw; RTX 3060,
   i5-12400F) and a **MacBook with the latest macOS**. Code goes through GitHub (user account
   `sardor-c`). The user runs pull/commit/push.
@@ -144,6 +148,9 @@ Part IV — 3D
 - NVIDIA hides mistakes (tested on the RTX 3060, driver 610.47, in a 4.1 context): `#version 430`
   compiles, a fragment `in` with no matching vertex `out` (wrong name or wrong type) links and renders
   black, a draw with no `glUseProgram` renders black with no GL error. Only the Mac can catch these.
+- NVIDIA: drawing from an attribute whose VBO has no storage crashes after 2–4 s (`0xC0000005`), no GL error.
+- Testing GUI keys: `SendKeys` depends on focus and silently misses; post `WM_KEYDOWN`/`WM_KEYUP` with the scancode
+  in lParam directly to the window, and run the same input on the good build as a control.
 - Testing pattern that worked: `--frames N` self-test (NaN, out-of-bounds, sorted keys), headless
   harnesses in the scratchpad with a fixed dt to compare implementations, screenshots via PowerShell.
 
@@ -157,7 +164,9 @@ Update this at the end of every session.
   it works on the Mac (the Mac's `OpenGL:` line and window title were requested, not received yet).
 - 2026-11-08: Lesson 02 done: the user's code rebuilt and run on Windows by Claude (triangle, 165 FPS,
   no GL errors); the user reports it works on the Mac (terminal output not received yet).
-- 2026-11-08: Lesson 03 written (`docs/03-kop-zarracha.md`), waiting for the user to do it.
+- 2026-11-09: Lesson 03 done: the user's code rebuilt and run on Windows by Claude (grid, 165 FPS, no GL
+  errors); the user reports it works on the Mac (terminal output not received).
+- 2026-11-09: Lesson 04 written (`docs/04-harakat.md`), waiting for the user to do it.
 
 Decisions so far:
 - One executable, `fluid_sim`. Compile with `-Wall -Wextra` (g++ and AppleClang only, no MSVC branch).
@@ -172,6 +181,12 @@ Decisions so far:
   (`1/half_width, 1/half_height`, `half_height = 5`); `uniform_location` in `shader.cpp` reports a -1.
 - Circle edge is `smoothstep(1 - fwidth, 1, dist)`, not the reference's `1 ± fwidth`: alpha must reach
   0 at the quad edge, otherwise the circle is visibly cut flat on its four sides (seen in a zoomed crop).
+- Lesson 04: simulation lives in `src/sim2d.{hpp,cpp}` with no GL calls (`Vec2`, `SimSettings`, `SpawnSettings`,
+  `Simulation` = SoA vectors, `spawn_particles`, `step_simulation`). `step_simulation` is `apply_gravity` then
+  `update_positions`; density/pressure go between them. Two VBOs: `position_vbo` re-specified every frame with
+  `glBufferData(GL_STREAM_DRAW)`, `color_vbo` static. Keys via `glfwSetKeyCallback` + window user pointer
+  (`Controls`): Space, Right, R (reset + pause), Esc. `nx = ceil(w * sqrt(density))` replaces the original's
+  equivalent formula. The user added `glPolygonMode` to `GL_FUNCTIONS`; tell them to add single lines, not replace the list.
 
 Verification status: lessons were built and run on the Windows PC (shared GLFW 3.5.1 from MSYS2,
 static GLFW 3.4 via FetchContent; RTX 3060 gives `4.1.0 NVIDIA 610.47`, monitor 165 Hz). **Claude has

@@ -24,6 +24,7 @@ add_executable(fluid_sim
     src/main.cpp
     src/gl.cpp
     src/shader.cpp
+    src/sim2d.cpp
 )
 
 target_include_directories(fluid_sim PRIVATE external/khronos)

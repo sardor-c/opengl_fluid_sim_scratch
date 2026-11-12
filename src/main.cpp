@@ -1,46 +1,57 @@
 #include "gl.hpp"
 #include "shader.hpp"
+#include "sim2d.hpp"
 
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #include <algorithm>
-#include <cstddef>
 #include <cstdio>
 #include <vector>
 
-struct Particle {
-    float x, y;
+struct Color {
     float r, g, b;
+};
+
+struct Controls {
+    bool paused = false;
+    bool step_once = false;
+    bool reset = false;
 };
 
 static void on_glfw_error(int code, const char* description) {
     std::fprintf(stderr, "GLFW xatosi %d: %s\n", code, description);
 }
 
+static void on_key(GLFWwindow* window, int key, int, int action, int) {
+    if (action != GLFW_PRESS) {
+        return;
+    }
+
+    Controls* controls = static_cast<Controls*>(glfwGetWindowUserPointer(window));
+    switch (key) {
+    case GLFW_KEY_SPACE: controls->paused = !controls->paused; break;
+    case GLFW_KEY_RIGHT: controls->step_once = true; break;
+    case GLFW_KEY_R: controls->reset = true; break;
+    case GLFW_KEY_ESCAPE: glfwSetWindowShouldClose(window, GLFW_TRUE); break;
+    default: break;
+    }
+}
+
 static const char* gl_string(GLenum name) {
     return reinterpret_cast<const char*>(glGetString(name));
 }
 
-static std::vector<Particle> make_grid(int nx, int ny, float width, float height) {
-    std::vector<Particle> particles;
-    particles.reserve(nx * ny);
+static std::vector<Color> make_colors(const std::vector<Vec2>& positions, const SpawnSettings& spawn) {
+    std::vector<Color> colors;
+    colors.reserve(positions.size());
 
-    for (int j = 0; j < ny; j++) {
-        for (int i = 0; i < nx; i++) {
-            const float tx = i / (nx - 1.0f);
-            const float ty = j / (ny - 1.0f);
-
-            Particle p;
-            p.x = (tx - 0.5f) * width;
-            p.y = (ty - 0.5f) * height;
-            p.r = 0.2f + 0.8f * tx;
-            p.g = 0.2f + 0.8f * ty;
-            p.b = 1.0f - 0.7f * tx;
-            particles.push_back(p);
-        }
+    for (const Vec2& p : positions) {
+        const float tx = (p.x - spawn.centre.x) / spawn.size.x + 0.5f;
+        const float ty = (p.y - spawn.centre.y) / spawn.size.y + 0.5f;
+        colors.push_back({ 0.2f + 0.8f * tx, 0.2f + 0.8f * ty, 1.0f - 0.7f * tx });
     }
-    return particles;
+    return colors;
 }
 
 int main() {
@@ -75,6 +86,10 @@ int main() {
 
     glfwSwapInterval(1);
 
+    Controls controls;
+    glfwSetWindowUserPointer(window, &controls);
+    glfwSetKeyCallback(window, on_key);
+
     GLuint program = create_program("particle2d.vert", "particle2d.frag");
     if (!program) {
         glfwDestroyWindow(window);
@@ -85,37 +100,62 @@ int main() {
     const GLint loc_world_to_clip = uniform_location(program, "u_world_to_clip");
     const GLint loc_diameter = uniform_location(program, "u_diameter");
 
-    const std::vector<Particle> particles = make_grid(81, 56, 6.42f, 4.39f);
-    const int particle_count = static_cast<int>(particles.size());
+    const SimSettings settings;
+    const SpawnSettings spawn;
+    const Simulation initial = spawn_particles(spawn);
+    Simulation sim = initial;
+
+    const std::vector<Color> colors = make_colors(initial.positions, spawn);
+    const int particle_count = static_cast<int>(sim.positions.size());
 
     GLuint vao = 0;
-    GLuint vbo = 0;
+    GLuint position_vbo = 0;
+    GLuint color_vbo = 0;
     glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
+    glGenBuffers(1, &position_vbo);
+    glGenBuffers(1, &color_vbo);
 
     glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, particles.size() * sizeof(Particle), particles.data(), GL_STATIC_DRAW);
 
+    glBindBuffer(GL_ARRAY_BUFFER, position_vbo);
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Particle),
-        reinterpret_cast<const void*>(offsetof(Particle, x)));
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), nullptr);
     glVertexAttribDivisor(0, 1);
 
+    glBindBuffer(GL_ARRAY_BUFFER, color_vbo);
+    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(Color), colors.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Particle),
-        reinterpret_cast<const void*>(offsetof(Particle, r)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Color), nullptr);
     glVertexAttribDivisor(1, 1);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     gl_check("sozlash");
 
-    double fps_time = glfwGetTime();
+    double last_time = glfwGetTime();
+    double fps_time = last_time;
     int fps_frames = 0;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        const double now = glfwGetTime();
+        const float frame_time = static_cast<float>(now - last_time);
+        last_time = now;
+
+        if (controls.reset) {
+            sim = initial;
+            controls.reset = false;
+            controls.paused = true;
+        }
+
+        if (!controls.paused || controls.step_once) {
+            const float dt = std::min(frame_time, settings.max_frame_time) / settings.iterations_per_frame;
+            for (int i = 0; i < settings.iterations_per_frame; i++) {
+                step_simulation(sim, settings, dt);
+            }
+        }
+        controls.step_once = false;
 
         int fb_width = 0;
         int fb_height = 0;
@@ -125,9 +165,18 @@ int main() {
         glClearColor(0.05f, 0.07f, 0.12f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        const float half_height = 5.0f;
         const float aspect = static_cast<float>(std::max(fb_width, 1)) / std::max(fb_height, 1);
-        const float half_width = half_height * aspect;
+        float half_height = 5.0f;
+        float half_width = half_height * aspect;
+
+        const float min_half_width = settings.bounds_size.x * 0.5f * 1.02f;
+        if (half_width < min_half_width) {
+            half_width = min_half_width;
+            half_height = half_width / aspect;
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, position_vbo);
+        glBufferData(GL_ARRAY_BUFFER, sim.positions.size() * sizeof(Vec2), sim.positions.data(), GL_STREAM_DRAW);
 
         glUseProgram(program);
         glUniform2f(loc_world_to_clip, 1.0f / half_width, 1.0f / half_height);
@@ -140,15 +189,15 @@ int main() {
         glfwSwapBuffers(window);
 
         fps_frames++;
-        const double now = glfwGetTime();
         if (now - fps_time >= 0.5) {
             int win_width = 0;
             int win_height = 0;
             glfwGetWindowSize(window, &win_width, &win_height);
 
             char title[128];
-            std::snprintf(title, sizeof(title), "Fluid Sim | %.0f FPS | %d zarracha | oyna %dx%d | framebuffer %dx%d",
-                fps_frames / (now - fps_time), particle_count, win_width, win_height, fb_width, fb_height);
+            std::snprintf(title, sizeof(title), "Fluid Sim | %.0f FPS | %d zarracha | oyna %dx%d | framebuffer %dx%d%s",
+                fps_frames / (now - fps_time), particle_count, win_width, win_height, fb_width, fb_height,
+                controls.paused ? " | pauza" : "");
             glfwSetWindowTitle(window, title);
 
             fps_time = now;
@@ -156,7 +205,8 @@ int main() {
         }
     }
 
-    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &position_vbo);
+    glDeleteBuffers(1, &color_vbo);
     glDeleteVertexArrays(1, &vao);
     glDeleteProgram(program);
 
